@@ -1,123 +1,110 @@
-# Cookies and Sessions Lab
+# Flask Cookies and Sessions Lab
 
-## Scenario
+## Overview
 
-In this lab, you'll be building out a blog paywall feature by using the session
-hash to keep track of how many page views a user has made.
+This project implements a backend-driven paywall system for a blog application using Flask sessions. The goal is to prevent users from bypassing frontend restrictions by enforcing article view limits at the server level.
 
-## Tools & Resources
+Users are allowed to view up to three articles. After exceeding this limit, the server responds with an error message indicating that the maximum number of page views has been reached.
 
-- [GitHub Repo](https://github.com/learn-co-curriculum/flask-cookies-and-sessions-lab)
-- [API - Flask: class flask.session](https://flask.palletsprojects.com/en/2.2.x/api/#flask.session)
+## Features
 
-## Set Up
+- Server-side session tracking using Flask's `session` object
+- Article view counter stored per user session
+- Paywall enforcement after 3 article views
+- JSON API responses with proper HTTP status codes
+- SQLite database with seeded article data
 
-There is some starter code in place for a Flask API backend and a React
-frontend. To get set up, run:
+## How It Works
 
-```bash
-pipenv install && pipenv shell
-npm install --prefix client
-cd server
-flask db upgrade
-python seed.py
+Each time a user requests an article:
+
+1. The server checks if a session key (`page_views`) exists
+2. If not, it initializes the counter
+3. The counter increments on every request
+4. Once the counter exceeds 3:
+   - The server blocks access
+   - Returns a `401 Unauthorized` response
+   - Includes an error message
+
+This ensures the paywall cannot be bypassed through frontend manipulation.
+
+## Routes
+
+### GET /articles
+
+Returns a list of all articles.
+
+### GET /articles/<id>
+
+Returns a single article if the user has not exceeded the view limit.
+
+Returns:
+
+```json
+{
+  "message": "Maximum pageview limit reached"
+}
 ```
 
-You can work on this lab by running the tests with `pytest -x`. It will also be
-helpful to see what's happening during the request/response cycle by running the
-app in the browser. You can run the Flask server with:
+with status code `401` if the limit is exceeded.
+
+### GET /clear
+
+Resets the session page view counter.
+
+## Setup Instructions
+
+1. Install dependencies:
+
+   ```bash
+   pipenv install && pipenv shell
+   npm install --prefix client
+   ```
+
+2. Set up the database:
+
+   ```bash
+   cd server
+   flask db upgrade
+   python seed.py
+   ```
+
+3. Run the backend:
+
+   ```bash
+   python app.py
+   ```
+
+4. Run the frontend (in a separate terminal):
+
+   ```bash
+   npm start --prefix client
+   ```
+
+## Testing
+
+Run the test suite with:
 
 ```bash
-python app.py
+pytest -x
 ```
 
-Open a second terminal which will be responsible for running the React app:
+All tests should pass, confirming:
 
-```bash
-npm start --prefix client
-```
+- Articles are returned correctly
+- Session tracking increments properly
+- Paywall is enforced after 3 views
 
-You don't have to make any changes to the React code to get this lab working.
+## Technologies Used
 
-If you aren't currently running the Flask app, you may see:
+- Flask
+- Flask-SQLAlchemy
+- Flask-Migrate
+- React (frontend)
+- SQLite
 
-```bash
-Proxy error: Could not proxy request /articles from localhost:4000 to http://localhost:5555.
-```
+## Screenshots
 
-That's okay, that just means our Flask API isn't yet running, but the frontend is 
-trying to make a request.
+![App Screenshot](<./client/public/screenshot.png(1).png>)
 
-## Instructions
-
-### Task 1: Define the Problem
-
-Users are currently limited to seeing 3 articles on the site before hitting a 
-paywall, but the logic is only in the frontend, so many tech-savvy users are 
-getting around the paywall using browser dev tools.
-
-### Task 2: Determine the Design
-
-Our app will keep track of how many blog posts a user has viewed by using the
-`session` object. Each user can view a **maximum of three articles** before
-seeing the paywall. This will ensure the logic is on the backend and not as easy
-for users to get around.
-
-### Task 3: Develop, Test, and Refine the Code
-
-#### Step 1: Initialize the Session for Page Views
-
-When a user makes a `GET` request to `/articles/<int:id>`:
-
-- If this is the first request this user has made, set `session['page_views']` to
-  an initial value of 0.
-
-#### Step 2: Increment the Session on Each Request
-
-For every request to `/articles/<int:id>`, increment the value of 
-`session['page_views']` by 1.
-
-#### Step 3: Send Response Based on Session Data
-
-- If the user has viewed 3 or fewer pages, render a JSON response with the
-  article data.
-- If the user has viewed more than 3 pages, render a JSON response including an
-  error message `{'message': 'Maximum pageview limit reached'}`, and a status code
-  of 401 unauthorized.
-
-#### Step 4: Test the Endpoint
-
-- In browser, navigate to your React app.
-- Click on 4 articles. The first 3 should be visible. The last article should say
-"Maximum articles viewed"
-- An API endpoint at `/clear` is available to clear your session as needed. Navigate
-to http://localhost:5555/clear to reset attempts.
-- Run test suite with `pytest` to ensure all tests are passing.
-  
-#### Step 5: Commit and Push Git History
-
-* Commit and push your code:
-
-```bash
-git add .
-git commit -m "final solution"
-git push
-```
-
-* If you created a separate feature branch, remember to open a PR on main and merge.
-
-### Task 4: Document and Maintain
-
-Best Practice documentation steps:
-* Add comments to the code to explain purpose and logic, clarifying intent and functionality of your code to other developers.
-* Update README text to reflect the functionality of the application following https://makeareadme.com. 
-  * Add screenshot of completed work included in Markdown in README.
-* Delete any stale branches on GitHub
-* Remove unnecessary/commented out code
-* If needed, update git ignore to remove sensitive data
-
-## Submit your solution
-
-CodeGrade will use the same test suite as the test suite included.
-
-Once all tests are passing, commit and push your work using `git` to submit to CodeGrade through Canvas.
+![App Screenshot](<./client/public/screenshot.png(2).png>)

@@ -27,7 +27,26 @@ def index_articles():
 
 @app.route('/articles/<int:id>')
 def show_article(id):
-    pass
+    # Initialize session tracking if this is the user's first request
+    if 'page_views' not in session:
+        session['page_views'] = 0
+
+    # Increment page view count for every article request
+    session['page_views'] += 1
+
+    # Enforce paywall: block access after 3 views
+    if session['page_views'] > 3:
+        return {'message': 'Maximum pageview limit reached'}, 401
+
+    # Retrieve requested article from database
+    article = db.session.get(Article, id)
+
+    # Handle case where article does not exist
+    if not article:
+        return {'message': 'Article not found'}, 404
+
+    # Return serialized article data
+    return make_response(ArticleSchema().dump(article), 200)
 
 
 if __name__ == '__main__':
